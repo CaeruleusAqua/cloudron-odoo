@@ -43,6 +43,8 @@ if [[ ! -f /app/data/odoo.conf ]]; then
   echo "First run complete."
 fi
 
+/usr/local/bin/gosu cloudron:cloudron /app/code/odoo/odoo-bin -i auth_ldap -c /app/data/odoo.conf --without-demo all  -d $CLOUDRON_POSTGRESQL_DATABASE --stop-after-init
+
 # These values should be re-set to make Odoo work as expcected.
 echo "Ensuring proper [options] in /app/data/odoo.conf ..."
 
