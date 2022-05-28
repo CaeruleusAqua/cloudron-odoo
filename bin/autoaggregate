@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import os
+import sys
+from multiprocessing import cpu_count
+from subprocess import check_call
+
+import yaml
+from doodbalib import (
+    ADDONS_YAML,
+    AUTO_REPOS_YAML,
+    CORE,
+    ODOO_DIR,
+    PRIVATE,
+    REPOS_YAML,
+    SRC_DIR,
+    logger,
+)
+
+# if the umask matches the `chmod -R u+rwX,g+rX-w,o= /opt/odoo` command the build is faster as we don't need to fix as
+# many permissions after auto aggregation
+UMASK = os.environ.get("UMASK") or "0027"
+UID = int(os.environ.get("UID") or -1)
+GID = int(os.environ.get("GID") or -1)
+DEFAULT_REPO_PATTERN = os.environ.get("DEFAULT_REPO_PATTERN")
+DEFAULT_REPO_PATTERN_ODOO = os.environ.get("DEFAULT_REPO_PATTERN_ODOO")
+log_level = os.environ.get("LOG_LEVEL", "INFO")
+
+
+def aggregate(config):
+    """Execute git aggregator to pull git code.
+
+    :param str config:
+        Path where to find the ``repos.yaml`` file.
+    """
+    logger.info("Running gitaggregate with %s", config)
+
+    def pre_exec_umask():
+        # Download git code with the specified umask, if set, otherwise use "0027"
+        os.umask(int(UMASK, 8))
+
+    pre_execs = [pre_exec_umask]
+
+    def pre_exec():
+        for _exec in pre_execs:
+            try:
+                _exec()
+            except Exception as e:
+                logger.error("Error in %s: %s" % (_exec, e))
+                logger.exception(e)
+                raise
+
+    if ~GID:
+
+        def pre_exec_gid():
+            # execute git with GID
+            os.setgid(GID)
+
+        pre_execs.append(pre_exec_gid)
+
+    if ~UID:
+
+        def pre_exec_uid():
+            # execute git with UID
+            os.setuid(UID)
+            # set odoo home directory
+            # (git checks if user has a config in $HOME, and we cannot read /root as odoo user)
+            os.environ["HOME"] = "/home/odoo"
+
+        pre_execs.append(pre_exec_uid)
+
+    check_call(
+        [
+            "gitaggregate",
+            "--expand-env",
+            "--config",
+            config,
+            "--log-level",
+            log_level,
+            "--jobs",
+            str(cpu_count() or 1),
+            "aggregate",
+        ],
+        cwd=SRC_DIR,
+        stderr=sys.stderr,
+        stdout=sys.stdout,
+        preexec_fn=pre_exec,
+    )
+
+
+def origin_for(
+    folder,
+    default_repo_pattern=DEFAULT_REPO_PATTERN,
+    odoo_repo_pattern=DEFAULT_REPO_PATTERN_ODOO,
+):
+    """Guess the default git origin for that folder.
+
+    :param str folder:
+        Normally an absolute path to an expected git repo, whose name should
+        match the git repository where it comes from, using the env-supplied
+        pattern.
+    """
+    base = os.path.basename(folder)
+    pattern = default_repo_pattern
+    if base == "odoo":
+        pattern = odoo_repo_pattern
+    return pattern.format(base)
+
+
+def missing_repos_config():
+    """Find the undefined repositories and return their default configuration.
+
+    :return dict:
+        git-aggregator-ready configuration dict for undefined repositories.
+    """
+    defined, expected = set(), {ODOO_DIR}
+    # Find the repositories defined by hand
+    try:
+        with open(REPOS_YAML) as yaml_file:
+            for doc in yaml.safe_load_all(yaml_file):
+                for repo in doc:
+                    defined.add(os.path.abspath(os.path.join(SRC_DIR, repo)))
+    except (IOError, AttributeError):
+        logger.debug("No repositories defined by hand")
+    addons_env = {}
+    # Find the repositories that should be present
+    try:
+        with open(ADDONS_YAML) as yaml_file:
+            for doc in yaml.safe_load_all(yaml_file):
+                env = dict(os.environ, **doc.get("ENV", {}))
+                for repo in doc:
+                    if repo in {PRIVATE, "ONLY", "ENV"}:
+                        continue
+                    if repo == CORE:
+                        repo_path = ODOO_DIR
+                    else:
+                        repo_path = os.path.abspath(os.path.join(SRC_DIR, repo))
+                    if not os.path.exists(repo_path) or os.path.isdir(
+                        os.path.join(repo_path, ".git")
+                    ):
+                        expected.add(repo_path)
+                        addons_env[repo_path] = env
+    except (IOError, AttributeError):
+        logger.debug("No addons are expected to be present")
+    # Find the undefined repositories and generate a config for them
+    missing = expected - defined
+    config = {}
+    for repo_path in missing:
+        env = addons_env.get(repo_path, os.environ)
+        depth = env["DEPTH_DEFAULT"]
+        origin_version = "origin %s" % env["ODOO_VERSION"]
+        config[repo_path] = {
+            "defaults": {"depth": depth},
+            "merges": [origin_version],
+            "remotes": {
+                "origin": origin_for(
+                    repo_path,
+                    env["DEFAULT_REPO_PATTERN"],
+                    env["DEFAULT_REPO_PATTERN_ODOO"],
+                )
+            },
+            "target": origin_version,
+        }
+    logger.debug("Generated missing repos config %r", config)
+    return config

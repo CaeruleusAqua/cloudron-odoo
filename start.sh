@@ -18,15 +18,16 @@ chown -R cloudron:cloudron /run
 
 # Check for First Run
 if [[ ! -f /app/data/odoo.conf ]]; then
+
   echo "First run. Initializing DB..."
 
   # Initialize the database, and exit.
-  /usr/local/bin/gosu cloudron:cloudron /app/code/odoo-bin -i base,auth_ldap,fetchmail --without-demo all --data-dir /app/data/odoo --logfile /run/odoo/runtime.log -d $CLOUDRON_POSTGRESQL_DATABASE --db_host $CLOUDRON_POSTGRESQL_HOST --db_port $CLOUDRON_POSTGRESQL_PORT --db_user $CLOUDRON_POSTGRESQL_USERNAME --db_pass $CLOUDRON_POSTGRESQL_PASSWORD --stop-after-init
+  /usr/local/bin/gosu cloudron:cloudron /app/code/odoo/odoo-bin -i base,auth_ldap,fetchmail --without-demo all --data-dir /app/data/odoo --logfile /run/odoo/runtime.log -d $CLOUDRON_POSTGRESQL_DATABASE --db_host $CLOUDRON_POSTGRESQL_HOST --db_port $CLOUDRON_POSTGRESQL_PORT --db_user $CLOUDRON_POSTGRESQL_USERNAME --db_pass $CLOUDRON_POSTGRESQL_PASSWORD --stop-after-init
 
   echo "Initialized successfully."
 
-  echo "Adding required tables/relations for mail settings."
-  pg_cli "INSERT INTO public.res_config_settings (create_uid, create_date, write_uid, write_date, company_id, user_default_rights, external_email_server_default, module_base_import, module_google_calendar, module_microsoft_calendar, module_mail_plugin, module_google_drive, module_google_spreadsheet, module_auth_oauth, module_auth_ldap, module_base_gengo, module_account_inter_company_rules, module_pad, module_voip, module_web_unsplash, module_partner_autocomplete, module_base_geolocalize, module_google_recaptcha, group_multi_currency, show_effect, profiling_enabled_until, module_product_images, unsplash_access_key, fail_counter, alias_domain, restrict_template_rendering, use_twilio_rtc_servers, twilio_account_sid, twilio_account_token, auth_signup_reset_password, auth_signup_uninvited, auth_signup_template_user_id) VALUES (2, 'NOW()', 2, 'NOW()', 1, false, true, true, false, false, false, false, false, false, true, false, false, false, false, true, true, false, false, false, true, NULL, false, NULL, 0, '$CLOUDRON_APP_DOMAIN', false, false, NULL, NULL, false, 'b2b', 5) ON CONFLICT (id) DO NOTHING;"
+  # echo "Adding required tables/relations for mail settings."
+  # pg_cli "INSERT INTO public.res_config_settings (create_uid, create_date, write_uid, write_date, company_id, user_default_rights, external_email_server_default, module_base_import, module_google_calendar, module_microsoft_calendar, module_google_drive, module_google_spreadsheet, module_auth_oauth, module_auth_ldap, module_base_gengo, module_account_inter_company_rules, module_pad, module_voip, module_web_unsplash, module_partner_autocomplete, module_base_geolocalize, module_google_recaptcha, group_multi_currency, show_effect, module_product_images, unsplash_access_key, fail_counter, alias_domain, restrict_template_rendering, use_twilio_rtc_servers, twilio_account_sid, twilio_account_token, auth_signup_reset_password, auth_signup_uninvited, auth_signup_template_user_id) VALUES (2, 'NOW()', 2, 'NOW()', 1, false, true, true, false, false, false, false, false, true, false, false, false, false, true, true, false, false, false, true, false, NULL, 0, '$CLOUDRON_APP_DOMAIN', false, false, NULL, NULL, false, 'b2b', 5) ON CONFLICT (id) DO NOTHING;"
 
   pg_cli "INSERT INTO public.ir_config_parameter (key, value, create_uid, create_date, write_uid, write_date) VALUES ('base_setup.default_external_email_server', 'True', 2, 'NOW()', 2, 'NOW()');"
   pg_cli "INSERT INTO public.ir_config_parameter (key, value, create_uid, create_date, write_uid, write_date) VALUES ('mail.catchall.domain', '$CLOUDRON_APP_DOMAIN', 2, 'NOW()', 2, 'NOW()');"
@@ -36,7 +37,9 @@ if [[ ! -f /app/data/odoo.conf ]]; then
 
   echo "Copying default configuration file to /app/data/odoo.conf..."
   cp /app/pkg/odoo.conf.sample /app/data/odoo.conf
-
+  
+  crudini --set /app/data/odoo.conf 'options' list_db "False"
+  crudini --set /app/data/odoo.conf 'options' admin_password "$CLOUDRON_MAIL_SMTP_PASSWORD"
   echo "First run complete."
 fi
 
@@ -44,7 +47,7 @@ fi
 echo "Ensuring proper [options] in /app/data/odoo.conf ..."
 
 # Custom paths
-crudini --set /app/data/odoo.conf 'options' addons_path "/app/code/addons,/app/data/extra-addons"
+crudini --set /app/data/odoo.conf 'options' addons_path "/app/code/auto/addons,/app/data/extra-addons,/app/code/odoo/addons"
 crudini --set /app/data/odoo.conf 'options' data_dir "/app/data/odoo"
 
 # Logging
@@ -61,7 +64,6 @@ crudini --set /app/data/odoo.conf 'options' port '8069'
 crudini --set /app/data/odoo.conf 'options' longpolling_port '8072'
 
 # Securing Odoo
-crudini --set /app/data/odoo.conf 'options' list_db "False"
 crudini --set /app/data/odoo.conf 'options' test_enable "False"
 crudini --set /app/data/odoo.conf 'options' test_file "False"
 crudini --set /app/data/odoo.conf 'options' test_report_directory "False"
@@ -93,7 +95,7 @@ if [[ -z "${CLOUDRON_MAIL_SMTP_SERVER+x}" ]]; then
   pg_cli "UPDATE public.ir_mail_server SET active='f' WHERE name LIKE 'Cloudron%';"
 else
   echo "SMTP is enabled. Adding values to config."
-  pg_cli "INSERT INTO public.ir_mail_server (id, name, from_filter, smtp_host, smtp_port, smtp_authentication, smtp_user, smtp_pass, smtp_encryption, smtp_ssl_certificate, smtp_ssl_private_key, smtp_debug, sequence, active, create_uid, create_date, write_uid, write_date) VALUES (1, 'Cloudron SMTP Service', NULL, '$CLOUDRON_MAIL_SMTP_SERVER', $CLOUDRON_MAIL_SMTP_PORT, 'login', '$CLOUDRON_MAIL_SMTP_USERNAME', '$CLOUDRON_MAIL_SMTP_PASSWORD', 'none', NULL, NULL, false, 10, true, 2, 'NOW()', 2, 'NOW()') ON CONFLICT (id) DO NOTHING;"
+  pg_cli "INSERT INTO public.ir_mail_server (id, name, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_encryption, smtp_debug, sequence, active, create_uid, create_date, write_uid, write_date) VALUES (1, 'Cloudron SMTP Service', '$CLOUDRON_MAIL_SMTP_SERVER', $CLOUDRON_MAIL_SMTP_PORT, '$CLOUDRON_MAIL_SMTP_USERNAME', '$CLOUDRON_MAIL_SMTP_PASSWORD', 'none', false, 10, true, 2, 'NOW()', 2, 'NOW()') ON CONFLICT (id) DO NOTHING;"
 fi
 
 # LDAP Configuration
@@ -147,4 +149,4 @@ echo "Done. Starting server with $worker_count workers.."
 
 chown -R cloudron:cloudron /app/data/
 
-/usr/local/bin/gosu cloudron:cloudron /app/code/odoo-bin -c /app/data/odoo.conf
+/usr/local/bin/gosu cloudron:cloudron /app/code/odoo/odoo-bin -c /app/data/odoo.conf

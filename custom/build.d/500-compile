@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+if [ "$COMPILE" != true ]; then
+    log WARNING Not compiling Python code
+    exit 0
+fi
+
+log INFO Compiling all Python code in /opt/odoo
+python -m compileall -q /opt/odoo

@@ -1,0 +1,7 @@
+# See syntax in https://www.ssh.com/ssh/config/ and `man ssh_config`
+Host *
+    IgnoreUnknown UseKeychain
+    UseKeychain yes
+    IdentityFile /root/.ssh/cloudron_git.rsa
+    PubkeyAcceptedKeyTypes=+ssh-dss
+    AddKeysToAgent yes
