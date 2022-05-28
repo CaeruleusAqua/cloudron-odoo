@@ -37,7 +37,6 @@ if [[ ! -f /app/data/odoo.conf ]]; then
 
   echo "Copying default configuration file to /app/data/odoo.conf..."
   cp /app/pkg/odoo.conf.sample /app/data/odoo.conf
-  
   crudini --set /app/data/odoo.conf 'options' list_db "False"
   crudini --set /app/data/odoo.conf 'options' admin_password "$CLOUDRON_MAIL_SMTP_PASSWORD"
   echo "First run complete."
