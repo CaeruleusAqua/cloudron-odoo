@@ -1,8 +1,5 @@
 sale-workflow:
   - "*"
-openupgrade:
-  - "openupgrade_framework"
-  - "openupgrade_scripts"
 partner-contact:
   - "*"
 server-ux:
@@ -10,21 +7,16 @@ server-ux:
 bank-payment:
   - "*"
 account-financial-tools:
-  - "account_*"
-  - "base_*"
+  - "*"
 community-data-files:
   - "*"
 hr:
   - "*"
 l10n-france:
   - "*"
-l10n-switzerland:
-  - "*"
 product-attribute:
   - "*"
 project:
-  - "*"
-project-reporting:
   - "*"
 web:
   - "*"
@@ -46,8 +38,8 @@ report-engine:
   - "*"
 formio:
   - "*"
-# learning_addons:
-#   - "*"
+learning_addons:
+  - "*"
 muk-web:
   - "*"
 rest-framework:
@@ -140,29 +132,17 @@ calendar:
   - "*"
 credit-control:
   - "*"
-# myc-extra-addons:
-#   - "*"
+myc-extra-addons:
+  - "*"
 account-invoicing:
   - "*"
 sync-addons:
   - "*"
-vertical-cooperative:
+cooperative:
   - "*"
-# nj-addons:
-#   - "*"
-vertical-association:
-  - "*"
-account-move-import:
+spreadsheet:
   - "*"
 galicea-addons:
   - "*"
-straga-main:
-  - "*"
-odoo-usability:
-  - "*"
-odoo-py3o-report-templates:
-  - "*"
-project-tools:
-  - "*"
-pad-tools:
+project-reporting:
   - "*"

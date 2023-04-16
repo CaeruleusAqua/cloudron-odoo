@@ -1,20 +1,39 @@
 FROM cloudron/base:3.2.0@sha256:ba1d566164a67c266782545ea9809dc611c4152e27686fd14060332dd88263ea
-# Reference: https://github.com/odoo/docker/blob/master/15.0/Dockerfile
+# Reference: https://github.com/odoo/docker/blob/master/16.0/Dockerfile
 
 RUN mkdir -p /app/code /app/pkg /app/data /app/code/auto/addons
 WORKDIR /app/code
 
 RUN apt-get update && \
-    apt-get install -y \
-    python3-dev libxml2-dev libxslt1-dev libldap2-dev libsasl2-dev \
-    libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev libfreetype6-dev \
-    liblcms2-dev libwebp-dev libharfbuzz-dev libfribidi-dev libxcb1-dev libpq-dev
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    dirmngr \
+    fonts-noto-cjk \
+    gnupg \
+    libssl-dev \
+    node-less \
+    npm \
+    python3-num2words \
+    python3-pdfminer \
+    python3-pip \
+    python3-phonenumbers \
+    python3-pyldap \
+    python3-qrcode \
+    python3-renderpm \
+    python3-setuptools \
+    python3-slugify \
+    python3-vobject \
+    python3-watchdog \
+    python3-xlrd \
+    python3-xlwt \
+    xz-utils
 
-RUN curl -o wkhtmltox.deb -sSL https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.focal_amd64.deb && \
-    echo 'ae4e85641f004a2097621787bf4381e962fb91e1 wkhtmltox.deb' | sha1sum -c - && \
-    apt-get install -y --no-install-recommends ./wkhtmltox.deb && \
-    rm -f ./wkhtmltox.deb && \
-    rm -rf /var/lib/apt/lists/* /var/cache/apt
+RUN curl -o wkhtmltox.deb -sSL https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.buster_amd64.deb \
+    && echo 'ea8277df4297afc507c61122f3c349af142f31e5 wkhtmltox.deb' | sha1sum -c - \
+    && apt-get install -y --no-install-recommends ./wkhtmltox.deb \
+    && rm -rf /var/lib/apt/lists/* wkhtmltox.deb \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt
 
 RUN npm install -g rtlcss
 
@@ -29,7 +48,7 @@ RUN chmod -R a+rx /usr/local/bin \
 # Install Odoo
 # sync extra addons
 
-ENV ODOO_VERSION=14.0
+ENV ODOO_VERSION=16.0
 ENV ODOO_SOURCE=OCA/OCB
 ENV DEPTH_DEFAULT=100
 ENV DEPTH_MERGE=500
@@ -58,7 +77,6 @@ RUN rm -rf /var/log/nginx && mkdir /run/nginx && ln -s /run/nginx /var/log/nginx
 
 # Copy entrypoint script and Odoo configuration file
 ADD start.sh odoo.conf.sample nginx.conf /app/pkg/
-
 
 WORKDIR /app/code/custom/src
 RUN gitaggregate -c /app/code/custom/src/repos.yaml --expand-env
