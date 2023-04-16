@@ -22,7 +22,7 @@ viberbot
 PyMuPDF==1.16.14
 factur-x
 regex
-dateparser
+dateparser==1.1.1
 pycairo
 rocketchat_API
 ovh
@@ -42,3 +42,16 @@ odoo_test_helper
 python-jose
 click-odoo-contrib
 python-jose
+pdfplumber
+openpyxl
+PyGithub
+caldav
+python-stdnum==1.17
+vatnumber
+pydrive
+weboob
+dropbox
+pysftp
+icalendar
+jsondiff
+extendable-pydantic

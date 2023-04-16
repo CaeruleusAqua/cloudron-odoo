@@ -162,3 +162,7 @@ odoo-usability:
   - "*"
 odoo-py3o-report-templates:
   - "*"
+project-tools:
+  - "*"
+pad-tools:
+  - "*"

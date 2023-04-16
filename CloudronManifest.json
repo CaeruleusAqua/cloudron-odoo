@@ -6,7 +6,7 @@
   "title": "Odoo",
   "author": "Odoo authors",
   "tagline": "Open Source ERP and CRM",
-  "version": "15.0.0",
+  "version": "14.0.0",
   "icon": "manifest/logo.png",
   "description": "file://manifest/DESCRIPTION.md",
   "changelog": "file://manifest/CHANGELOG.md",
@@ -25,8 +25,8 @@
     "auth"
   ],
   "optionalSso": true,
+  "multiDomain": true,
   "mediaLinks": [],
   "forumUrl": "https://forum.cloudron.io/",
   "documentationUrl": "https://docs.cloudron.io/"
 }
-

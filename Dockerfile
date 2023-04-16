@@ -38,6 +38,10 @@ RUN git config --global user.name "Cloudron service"
 
 # RUN curl -L https://github.com/odoo/odoo/archive/${ODOO_COMMIT_HASH}.tar.gz | tar zx --strip-components 1 -C /app/code && \
 RUN git clone https://github.com/odoo/odoo.git --depth 1 -b $ODOO_VERSION /app/code/odoo
+WORKDIR /app/code/odoo
+RUN git pull -r
+WORKDIR /app/code
+RUN pip3 install -e /app/code/odoo
 RUN pip3 install wheel && \
     pip3 install -r https://raw.githubusercontent.com/$ODOO_SOURCE/$ODOO_VERSION/requirements.txt && \
     pip3 install psycopg2==2.8.6 \
@@ -45,7 +49,7 @@ RUN pip3 install wheel && \
     && (python3 -m compileall -q /usr/local/lib/python3.8/ || true)
 
 # Patch Odoo to prevent connecting to the default database named 'postgres' every now and then.
-RUN  sed -i.bak "718i\    to = tools.config['db_name']" /app/code/odoo/odoo/sql_db.py
+RUN  sed -i.bak "720i\    to = tools.config['db_name']" /app/code/odoo/odoo/sql_db.py
 
 # Properly map the LDAP attribute 'displayname' instead of 'cn' to the display name of the logged in user.
 RUN  sed -i.bak "181s/'cn'/'displayname'/" /app/code/odoo/addons/auth_ldap/models/res_company_ldap.py

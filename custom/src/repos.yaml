@@ -603,7 +603,6 @@
     - oca 14.0
     - oca refs/pull/326/head
     #- oca refs/pull/334/head
-    - oca refs/pull/454/head
 ./timesheet:
   defaults:
     # Shallow repositories ($DEPTH_DEFAULT=1) are faster & thinner
@@ -879,6 +878,22 @@
     depth: $DEPTH_DEFAULT
   remotes:
     origin: https://github.com/akretion/odoo-py3o-report-templates.git
+  target: origin 14.0
+  merges:
+    - origin 14.0
+./project-tools:
+  defaults:
+    depth: $DEPTH_DEFAULT
+  remotes:
+    origin: https://github.com/elabore-coop/project-tools.git
+  target: origin 14.0
+  merges:
+    - origin 14.0
+./pad-tools:
+  defaults:
+    depth: $DEPTH_DEFAULT
+  remotes:
+    origin: https://github.com/elabore-coop/pad-tools.git
   target: origin 14.0
   merges:
     - origin 14.0

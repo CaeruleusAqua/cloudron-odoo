@@ -42,13 +42,18 @@ if [[ ! -f /app/data/odoo.conf ]]; then
   echo "First run complete."
 fi
 
-/usr/local/bin/gosu cloudron:cloudron /app/code/odoo/odoo-bin -i auth_ldap -c /app/data/odoo.conf --without-demo all  -d $CLOUDRON_POSTGRESQL_DATABASE --stop-after-init
-
 # These values should be re-set to make Odoo work as expcected.
 echo "Ensuring proper [options] in /app/data/odoo.conf ..."
 
+/usr/local/bin/gosu cloudron:cloudron /app/code/odoo/odoo-bin -i auth_ldap,fetchmail -d $CLOUDRON_POSTGRESQL_DATABASE -c /app/data/odoo.conf --without-demo all --stop-after-init
+
+# Check if asking update
+if [[ -f /app/data/update ]]; then
+  /usr/local/bin/gosu cloudron:cloudron /app/code/odoo/odoo-bin -u all -d $CLOUDRON_POSTGRESQL_DATABASE -c /app/data/odoo.conf --without-demo all --stop-after-init
+fi
+
 # Custom paths
-crudini --set /app/data/odoo.conf 'options' addons_path "/app/code/auto/addons,/app/data/extra-addons,/app/code/odoo/addons"
+crudini --set /app/data/odoo.conf 'options' addons_path "/app/data/extra-addons,/app/code/auto/addons,/app/code/odoo/addons"
 crudini --set /app/data/odoo.conf 'options' data_dir "/app/data/odoo"
 
 # Logging
