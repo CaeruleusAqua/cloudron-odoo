@@ -27,13 +27,12 @@ RUN apt-get update && \
     python3-watchdog \
     python3-xlrd \
     python3-xlwt \
-    xz-utils
+    xz-utils \
+    python3-cffi
 
-RUN curl -o wkhtmltox.deb -sSL https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.buster_amd64.deb \
-    && echo 'ea8277df4297afc507c61122f3c349af142f31e5 wkhtmltox.deb' | sha1sum -c - \
+RUN curl -o wkhtmltox.deb -sSL https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.focal_amd64.deb \
     && apt-get install -y --no-install-recommends ./wkhtmltox.deb \
-    && rm -rf /var/lib/apt/lists/* wkhtmltox.deb \
-    && rm -rf /var/lib/apt/lists/* /var/cache/apt
+    && rm -rf /var/lib/apt/lists/* wkhtmltox.deb
 
 RUN npm install -g rtlcss
 
@@ -61,6 +60,7 @@ WORKDIR /app/code/odoo
 RUN git pull -r
 WORKDIR /app/code
 RUN pip3 install -e /app/code/odoo
+RUN pip3 install cffi==1.15.0
 RUN pip3 install wheel && \
     pip3 install -r https://raw.githubusercontent.com/$ODOO_SOURCE/$ODOO_VERSION/requirements.txt && \
     pip3 install psycopg2==2.8.6 \
@@ -68,15 +68,12 @@ RUN pip3 install wheel && \
     && (python3 -m compileall -q /usr/local/lib/python3.8/ || true)
 
 # Patch Odoo to prevent connecting to the default database named 'postgres' every now and then.
-RUN  sed -i.bak "720i\    to = tools.config['db_name']" /app/code/odoo/odoo/sql_db.py
+RUN  sed -i.bak "772i\    to = tools.config['db_name']" /app/code/odoo/odoo/sql_db.py
 
 # Properly map the LDAP attribute 'displayname' instead of 'cn' to the display name of the logged in user.
-RUN  sed -i.bak "181s/'cn'/'displayname'/" /app/code/odoo/addons/auth_ldap/models/res_company_ldap.py
+RUN  sed -i.bak "198s/'cn'/'displayname'/" /app/code/odoo/addons/auth_ldap/models/res_company_ldap.py
 
 RUN rm -rf /var/log/nginx && mkdir /run/nginx && ln -s /run/nginx /var/log/nginx
-
-# Copy entrypoint script and Odoo configuration file
-ADD start.sh odoo.conf.sample nginx.conf /app/pkg/
 
 WORKDIR /app/code/custom/src
 RUN gitaggregate -c /app/code/custom/src/repos.yaml --expand-env
@@ -84,6 +81,9 @@ RUN /app/code/custom/build.d/110-addons-link
 RUN /app/code/custom/build.d/200-dependencies
 RUN /app/code/custom/build.d/400-clean
 RUN /app/code/custom/build.d/900-dependencies-cleanup
+
+# Copy entrypoint script and Odoo configuration file
+ADD start.sh odoo.conf.sample nginx.conf /app/pkg/
 
 RUN mkdir -p /app/data/odoo/filestore /app/data/odoo/addons && \
     chown -R cloudron:cloudron /app/data

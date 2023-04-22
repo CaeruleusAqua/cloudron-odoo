@@ -14,7 +14,7 @@ pg_cli() {
 
 # Create required directories if they don't exist
 mkdir -p /app/data/extra-addons /app/data/odoo /run/odoo /run/nginx
-chown -R cloudron:cloudron /run
+chown -R cloudron:cloudron /run /app/data
 
 # Check for First Run
 if [[ ! -f /app/data/odoo.conf ]]; then
@@ -27,8 +27,7 @@ if [[ ! -f /app/data/odoo.conf ]]; then
   echo "Initialized successfully."
 
   # echo "Adding required tables/relations for mail settings."
-  # pg_cli "INSERT INTO public.res_config_settings (create_uid, create_date, write_uid, write_date, company_id, user_default_rights, external_email_server_default, module_base_import, module_google_calendar, module_microsoft_calendar, module_google_drive, module_google_spreadsheet, module_auth_oauth, module_auth_ldap, module_base_gengo, module_account_inter_company_rules, module_pad, module_voip, module_web_unsplash, module_partner_autocomplete, module_base_geolocalize, module_google_recaptcha, group_multi_currency, show_effect, module_product_images, unsplash_access_key, fail_counter, alias_domain, restrict_template_rendering, use_twilio_rtc_servers, twilio_account_sid, twilio_account_token, auth_signup_reset_password, auth_signup_uninvited, auth_signup_template_user_id) VALUES (2, 'NOW()', 2, 'NOW()', 1, false, true, true, false, false, false, false, false, true, false, false, false, false, true, true, false, false, false, true, false, NULL, 0, '$CLOUDRON_APP_DOMAIN', false, false, NULL, NULL, false, 'b2b', 5) ON CONFLICT (id) DO NOTHING;"
-
+  
   pg_cli "INSERT INTO public.ir_config_parameter (key, value, create_uid, create_date, write_uid, write_date) VALUES ('base_setup.default_external_email_server', 'True', 2, 'NOW()', 2, 'NOW()');"
   pg_cli "INSERT INTO public.ir_config_parameter (key, value, create_uid, create_date, write_uid, write_date) VALUES ('mail.catchall.domain', '$CLOUDRON_APP_DOMAIN', 2, 'NOW()', 2, 'NOW()');"
 
@@ -45,7 +44,7 @@ fi
 # These values should be re-set to make Odoo work as expcected.
 echo "Ensuring proper [options] in /app/data/odoo.conf ..."
 
-/usr/local/bin/gosu cloudron:cloudron /app/code/odoo/odoo-bin -i auth_ldap,fetchmail -d $CLOUDRON_POSTGRESQL_DATABASE -c /app/data/odoo.conf --without-demo all --stop-after-init
+/usr/local/bin/gosu cloudron:cloudron /app/code/odoo/odoo-bin -i auth_ldap,fetchmail -d $CLOUDRON_POSTGRESQL_DATABASE -c /app/data/odoo.conf --db_host $CLOUDRON_POSTGRESQL_HOST --db_port $CLOUDRON_POSTGRESQL_PORT --db_user $CLOUDRON_POSTGRESQL_USERNAME --db_pass $CLOUDRON_POSTGRESQL_PASSWORD --without-demo all --stop-after-init
 
 # Check if asking update
 if [[ -f /app/data/update ]]; then
@@ -87,22 +86,22 @@ crudini --set /app/data/odoo.conf 'options' db_filter "^$CLOUDRON_POSTGRESQL_DAT
 crudini --set /app/data/odoo.conf 'options' db_sslmode 'False'
 
 # IMAP Configuration
-if [[ -z "${CLOUDRON_MAIL_IMAP_SERVER+x}" ]]; then
-  echo "IMAP is disabled. Removing values from config."
-  pg_cli "UPDATE public.fetchmail_server SET active='f' WHERE name LIKE 'Cloudron%';"
-else
-  echo "IMAP is enabled. Adding values to config."
-  pg_cli "INSERT INTO public.fetchmail_server (id, name, active, state, server, port, server_type, is_ssl, attach, original, date, \"user\", password, object_id, priority, configuration, script, create_uid, create_date, write_uid, write_date) VALUES (1, 'Cloudron IMAP Service', true, 'done', '$CLOUDRON_MAIL_IMAP_SERVER', $CLOUDRON_MAIL_IMAP_PORT, 'imap', false, true, false, NULL, '$CLOUDRON_MAIL_IMAP_USERNAME', '$CLOUDRON_MAIL_IMAP_PASSWORD', 151, 5, NULL, '/mail/static/scripts/odoo-mailgate.py', 2, 'NOW()', 2, 'NOW()') ON CONFLICT (id) DO NOTHING;"
-fi
+# if [[ -z "${CLOUDRON_MAIL_IMAP_SERVER+x}" ]]; then
+#   echo "IMAP is disabled. Removing values from config."
+#   pg_cli "UPDATE public.fetchmail_server SET active='f' WHERE name LIKE 'Cloudron%';"
+# else
+#   echo "IMAP is enabled. Adding values to config."
+#   pg_cli "INSERT INTO public.fetchmail_server (id, name, active, state, server, port, server_type, is_ssl, attach, original, date, \"user\", password, object_id, priority, configuration, script, create_uid, create_date, write_uid, write_date) VALUES (1, 'Cloudron IMAP Service', true, 'done', '$CLOUDRON_MAIL_IMAP_SERVER', $CLOUDRON_MAIL_IMAP_PORT, 'imap', false, true, false, NULL, '$CLOUDRON_MAIL_IMAP_USERNAME', '$CLOUDRON_MAIL_IMAP_PASSWORD', 151, 5, NULL, '/mail/static/scripts/odoo-mailgate.py', 2, 'NOW()', 2, 'NOW()') ON CONFLICT (id) DO NOTHING;"
+# fi
 
 # SMTP Configuration
-if [[ -z "${CLOUDRON_MAIL_SMTP_SERVER+x}" ]]; then
-  echo "SMTP is disabled. Removing values from config."
-  pg_cli "UPDATE public.ir_mail_server SET active='f' WHERE name LIKE 'Cloudron%';"
-else
-  echo "SMTP is enabled. Adding values to config."
-  pg_cli "INSERT INTO public.ir_mail_server (id, name, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_encryption, smtp_debug, sequence, active, create_uid, create_date, write_uid, write_date) VALUES (1, 'Cloudron SMTP Service', '$CLOUDRON_MAIL_SMTP_SERVER', $CLOUDRON_MAIL_SMTP_PORT, '$CLOUDRON_MAIL_SMTP_USERNAME', '$CLOUDRON_MAIL_SMTP_PASSWORD', 'none', false, 10, true, 2, 'NOW()', 2, 'NOW()') ON CONFLICT (id) DO NOTHING;"
-fi
+# if [[ -z "${CLOUDRON_MAIL_SMTP_SERVER+x}" ]]; then
+#   echo "SMTP is disabled. Removing values from config."
+#   pg_cli "UPDATE public.ir_mail_server SET active='f' WHERE name LIKE 'Cloudron%';"
+# else
+#   echo "SMTP is enabled. Adding values to config."
+#   pg_cli "INSERT INTO public.ir_mail_server (id, name, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_encryption, smtp_debug, sequence, active, create_uid, create_date, write_uid, write_date) VALUES (1, 'Cloudron SMTP Service', '$CLOUDRON_MAIL_SMTP_SERVER', $CLOUDRON_MAIL_SMTP_PORT, '$CLOUDRON_MAIL_SMTP_USERNAME', '$CLOUDRON_MAIL_SMTP_PASSWORD', 'none', false, 10, true, 2, 'NOW()', 2, 'NOW()') ON CONFLICT (id) DO NOTHING;"
+# fi
 
 # LDAP Configuration
 if [[ -z "${CLOUDRON_LDAP_SERVER+x}" ]]; then
@@ -123,8 +122,6 @@ if [[ ! -f /app/data/nginx-custom-locations.conf ]]; then
 # Or add custom directives. See https://nginx.org/en/docs/http/ngx_http_core_module.html#server
 EOF
 fi
-
-chown -R cloudron:cloudron /app/data
 
 echo "=> Start nginx"
 rm -f /run/nginx.pid
