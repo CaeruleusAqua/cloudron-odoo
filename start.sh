@@ -66,8 +66,9 @@ crudini --set /app/data/odoo.conf 'options' proxy_mode "True"
 crudini --set /app/data/odoo.conf 'options' secure 'False'
 crudini --set /app/data/odoo.conf 'options' interface '127.0.0.1'
 crudini --set /app/data/odoo.conf 'options' port '8069'
-crudini --set /app/data/odoo.conf 'options' longpolling_port '8072'
-
+crudini --set /app/data/odoo.conf 'options' longpolling_port 'False'
+crudini --set /app/data/odoo.conf 'options' gevent_port '8072'
+crudini --set /app/data/odoo.conf 'options' limit_time_cpu '600'
 # Securing Odoo
 crudini --set /app/data/odoo.conf 'options' test_enable "False"
 crudini --set /app/data/odoo.conf 'options' test_file "False"

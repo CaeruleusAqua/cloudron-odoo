@@ -46,7 +46,7 @@ pdfplumber
 openpyxl
 PyGithub
 caldav
-python-stdnum==1.17
+python-stdnum==1.18
 vatnumber
 pydrive
 weboob
@@ -55,3 +55,5 @@ pysftp
 icalendar
 jsondiff
 extendable-pydantic
+astor
+flanker
