@@ -57,3 +57,6 @@ jsondiff
 extendable-pydantic
 astor
 flanker
+redis
+dnsq
+xlrd
