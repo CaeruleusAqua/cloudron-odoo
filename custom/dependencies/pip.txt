@@ -60,3 +60,4 @@ flanker
 redis
 dnsq
 xlrd
+git+https://github.com/turicas/rows.git@develop#egg=rows
