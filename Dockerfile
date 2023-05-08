@@ -54,6 +54,8 @@ ENV DEPTH_MERGE=500
 RUN git config --global user.email "$CLOUDRON_MAIL_SMTP_USERNAME"
 RUN git config --global user.name "Cloudron service"
 
+RUN /app/code/custom/build.d/200-dependencies
+
 # RUN curl -L https://github.com/odoo/odoo/archive/${ODOO_COMMIT_HASH}.tar.gz | tar zx --strip-components 1 -C /app/code && \
 RUN git clone https://github.com/odoo/odoo.git --depth 1 -b $ODOO_VERSION /app/code/odoo
 WORKDIR /app/code/odoo

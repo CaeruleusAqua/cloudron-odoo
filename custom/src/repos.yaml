@@ -583,13 +583,16 @@
     # for a sane value of 100 commits)
     depth: 200
   remotes:
-    oca: https://github.com/OCA/edi.git
-  target: oca 16.0
+    #oca: https://github.com/OCA/edi.git
+    alusage: https://github.com/Alusage/edi.git
+  target: alusage 16.0-with-oca-pr
   merges:
-    - oca 16.0
-    - oca refs/pull/706/head
-    - oca refs/pull/724/head
-    - oca refs/pull/742/head
+    - alusage 16.0-with-oca-pr
+    #- oca refs/pull/706/head
+    #- oca refs/pull/724/head
+    #- oca refs/pull/742/head
+    #- oca refs/pull/754/head
+    #- oca refs/pull/755/head
 ./timesheet:
   defaults:
     # Shallow repositories ($DEPTH_DEFAULT=1) are faster & thinner
@@ -820,6 +823,14 @@
     depth: $DEPTH_DEFAULT
   remotes:
     origin: https://git.myceliandre.fr/Myceliandre/galicea-odoo-addons-ecosystem.git
+  target: origin 16.0
+  merges:
+    - origin 16.0
+./account-move-import:
+  defaults:
+    depth: $DEPTH_DEFAULT
+  remotes:
+    origin: https://github.com/akretion/account-move-import.git
   target: origin 16.0
   merges:
     - origin 16.0
