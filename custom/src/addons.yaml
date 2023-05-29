@@ -148,3 +148,5 @@ project-reporting:
   - "*"
 account-move-import:
   - "*"
+onlyoffice-odoo:
+  - "onlyoffice_odoo"

@@ -61,3 +61,5 @@ git+https://github.com/turicas/rows.git@develop#egg=rows
 unicodecsv
 openpyxl
 xlrd
+pgpy
+pyjwt

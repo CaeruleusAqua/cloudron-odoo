@@ -100,11 +100,18 @@
     depth: 400
   remotes:
     oca: https://github.com/OCA/l10n-france.git
-  target: oca 16.0
+    alusage: https://github.com/Alusage/l10n-france.git
+  target: alusage 16.0_waiting_pr
   merges:
-    - oca 16.0
+    #- oca 16.0
     #- oca refs/pull/405/head
-    - oca refs/pull/430/head
+    #- oca refs/pull/408/head
+    #- oca refs/pull/413/head
+    #- oca refs/pull/423/head
+    #- oca refs/pull/430/head
+    #- oca refs/pull/440/head
+    #- oca refs/pull/444/head
+    - alusage 16.0_waiting_pr
 ./product-attribute:
   defaults:
     # Shallow repositories ($DEPTH_DEFAULT=1) are faster & thinner
@@ -591,6 +598,7 @@
     #- oca refs/pull/706/head
     #- oca refs/pull/724/head
     #- oca refs/pull/742/head
+    #- oca refs/pull/753/head
     #- oca refs/pull/754/head
     #- oca refs/pull/755/head
 ./timesheet:
@@ -831,6 +839,14 @@
     depth: $DEPTH_DEFAULT
   remotes:
     origin: https://github.com/akretion/account-move-import.git
+  target: origin 16.0
+  merges:
+    - origin 16.0
+./onlyoffice-odoo:
+  defaults:
+    depth: $DEPTH_DEFAULT
+  remotes:
+    origin: https://github.com/ONLYOFFICE/onlyoffice_odoo.git
   target: origin 16.0
   merges:
     - origin 16.0
