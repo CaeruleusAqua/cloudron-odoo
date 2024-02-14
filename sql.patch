@@ -1,0 +1,10 @@
+--- sql_db.py.bak	2024-02-13 10:50:56.324841855 +0100
++++ sql_db.py	2024-02-13 12:43:10.152625169 +0100
+@@ -794,6 +794,7 @@
+ 
+ def db_connect(to, allow_uri=False):
+     global _Pool
++    to = tools.config['db_name']
+     if _Pool is None:
+         _Pool = ConnectionPool(int(
+             odoo.evented and tools.config['db_maxconn_gevent']

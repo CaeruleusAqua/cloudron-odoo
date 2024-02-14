@@ -16,18 +16,32 @@ pg_cli() {
 mkdir -p /app/data/extra-addons /app/data/odoo /run/odoo /run/nginx
 chown -R cloudron:cloudron /run /app/data
 
+
+source /app/code/odoo_venv/bin/activate
+#source odoo_venv/bin/activate
+#pip3 install --upgrade pip
+#pip3 install -e /app/code/odoo
+pip3 list > /app/data/installed_packages.txt
+echo "Initial Start"
+
+
+#cat /app/code/odoo_venv/lib/python3.10/site-packages/werkzeug/urls.py
+#mkdir -p /app/data/debug
+#cp -r /app/code/ /app/data/debug/
+
+
 # Check for First Run
 if [[ ! -f /app/data/odoo.conf ]]; then
 
   echo "First run. Initializing DB..."
 
   # Initialize the database, and exit.
-  /usr/local/bin/gosu cloudron:cloudron /app/code/odoo/odoo-bin -i base,auth_ldap,fetchmail --without-demo all --data-dir /app/data/odoo --logfile /run/odoo/runtime.log -d $CLOUDRON_POSTGRESQL_DATABASE --db_host $CLOUDRON_POSTGRESQL_HOST --db_port $CLOUDRON_POSTGRESQL_PORT --db_user $CLOUDRON_POSTGRESQL_USERNAME --db_pass $CLOUDRON_POSTGRESQL_PASSWORD --stop-after-init
+  /usr/local/bin/gosu cloudron:cloudron /app/code/odoo/odoo-bin -i base,auth_ldap,fetchmail --without-demo all --data-dir /app/data/odoo --logfile /app/data/runtime.log -d $CLOUDRON_POSTGRESQL_DATABASE --db_host $CLOUDRON_POSTGRESQL_HOST --db_port $CLOUDRON_POSTGRESQL_PORT --db_user $CLOUDRON_POSTGRESQL_USERNAME --db_pass $CLOUDRON_POSTGRESQL_PASSWORD --stop-after-init
 
   echo "Initialized successfully."
 
-  # echo "Adding required tables/relations for mail settings."
-  
+  echo "Adding required tables/relations for mail settings."
+
   pg_cli "INSERT INTO public.ir_config_parameter (key, value, create_uid, create_date, write_uid, write_date) VALUES ('base_setup.default_external_email_server', 'True', 2, 'NOW()', 2, 'NOW()');"
   pg_cli "INSERT INTO public.ir_config_parameter (key, value, create_uid, create_date, write_uid, write_date) VALUES ('mail.catchall.domain', '$CLOUDRON_APP_DOMAIN', 2, 'NOW()', 2, 'NOW()');"
 
